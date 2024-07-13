@@ -1,5 +1,6 @@
 import paramiko
 import configparser
+import subprocess
 
 def parse_config_file(filename):
     config = configparser.ConfigParser()
@@ -54,6 +55,37 @@ def parse_detstatus(command_output):
                 return None
     return None
 
+def ping(host):
+    command = ['ping', '-c', '1', host]
+    try:
+        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=5)
+        if result.returncode == 0:
+            return True
+        else:
+            return False
+    except subprocess.TimeoutExpired:
+        return False
+
+def calculate_power_usage(watt_percent, config):
+    ups_wattage = config.get("Power", "ups_wattage")
+
+    try:
+        if watt_percent > 0:
+            watts_used = ups_wattage * (watt_percent * 0.01) # convert to percentage
+            return watts_used
+        if watt_percent == 0:
+            if ping(config.get("Power", "host_to_check_1")): # machine is online
+                return config.get("Power", "no_value_power_usage_if_checks_pass")
+            elif ping(config.get("Power", "host_to_check_2")): # machine is online
+                return config.get("Power", "no_value_power_usage_if_checks_pass")
+            else: # both machines offline
+                return config.get("Power", "no_value_power_usage")
+        else:
+            print("Error: Unexpected output wattage")
+            return None
+    except Exception as e:
+        print("Error:", e)
+
 if __name__ == "__main__":
     config = parse_config_file("config.ini")
 
@@ -65,9 +97,5 @@ if __name__ == "__main__":
 
     output_wattage_percent = parse_detstatus(output)
 
-
-    try:
-        print("%:", output_wattage_percent)
-        print((output_wattage_percent * 3))
-    except:
-        print("Fail")    
+    result = calculate_power_usage(output_wattage_percent, config)
+    print(result)
