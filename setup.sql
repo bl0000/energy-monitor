@@ -1,4 +1,4 @@
-CREATE energymon;
+CREATE DATABASE energymon;
 
 USE energymon;
 
@@ -18,4 +18,5 @@ CREATE TABLE total_cost (
 
 CREATE USER 'energymon-admin'@'%' IDENTIFIED BY 'password'; -- change this
 
-GRANT ALL PRIVILEGES ON energymon.* TO 'energymon-admin'@'%';
+GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER, LOCK TABLES ON energymon.* TO 'energymon-admin'@'%';
+
