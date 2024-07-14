@@ -2,6 +2,8 @@ import paramiko
 import configparser
 import subprocess
 
+import db_mgmt
+
 def parse_config_file(filename):
     config = configparser.ConfigParser()
     try:
