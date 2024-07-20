@@ -12,4 +12,4 @@ Customisable APC UPS power usage monitor.
 - pip install mysql-connector-python==8.4.0 paramiko
 
 The crontab entry should take the following format:
-- `*/5 * * * * source /home/user/energy-monitor/env/bin/activate && /home/user/energy-monitor/env/bin/python /home/user/energy-monitor/main.py
+- `*/5 * * * * /bin/bash /home/user/energy-monitor/run_energy_monitor.sh
