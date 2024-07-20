@@ -13,15 +13,15 @@ class dbManage():
         except Exception as e:
             print("Failed to initialise dbManage\nError message:", e)
 
-    def insert_power_used(self, watts, cost_in_pence):
+    def insert_power_used(self, watts):
         try:
             cursor = self.mydb.cursor()
 
             current_date_time = datetime.datetime.now()
 
-            values = watts, cost_in_pence, current_date_time
+            values = watts, current_date_time
 
-            cursor.execute("INSERT INTO power_used (watts, cost_in_pence, added) VALUES (%s, %s, %s)", values)
+            cursor.execute("INSERT INTO power_used (watts, added) VALUES (%s, %s)", values)
 
             self.mydb.commit()
 

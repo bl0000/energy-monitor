@@ -1,6 +1,7 @@
 import paramiko
 import configparser
 import subprocess
+import time
 
 import db_mgmt
 
@@ -32,13 +33,11 @@ def ssh_connection(hostname, username, password):
     shell = client.invoke_shell()
 
     result = shell.recv(65535).decode('ascii') # empty the receive buffer first so the card moves on to its prompt
-    shell.send(bytes("detstatus -om\n", 'ascii'))       # important to send a newline with the command otherwise its still waiting
+    shell.send(bytes("detstatus -om\n", 'ascii')) # important to send a newline with the command otherwise its still waiting
     result = shell.recv(65535).decode('ascii') # empty the buffer again so I can capture the output
 
     command_output = str(result).split("\r\napc>detstatus -om\r\n")[-1]
     
-    print(str(result)) #debug
-
     client.close()
 
     return command_output
@@ -73,7 +72,7 @@ def calculate_power_usage(watt_percent, config):
 
     try:
         if watt_percent > 0:
-            watts_used = ups_wattage * (watt_percent * 0.01) # convert to percentage
+            watts_used = int(ups_wattage) * (watt_percent * 0.01) # convert to percentage
             return watts_used
         if watt_percent == 0:
             if ping(config.get("Power", "host_to_check_1")): # machine is online
@@ -87,17 +86,30 @@ def calculate_power_usage(watt_percent, config):
             return None
     except Exception as e:
         print("Error:", e)
+        return None
 
 if __name__ == "__main__":
-    config = parse_config_file("config.ini")
+    config = parse_config_file("/home/ben/energy-monitor/config.ini")
 
-    host = config.get("Connection", "host")
-    username = config.get("Connection", "username")
-    password = config.get("Connection", "password")
+    ssh_host = config.get("Connection", "host")
+    ssh_username = config.get("Connection", "username")
+    ssh_password = config.get("Connection", "password")
+
+    host = config.get("Database", "host")
+    database = config.get("Database", "database")
+    username = config.get("Database", "username")
+    password = config.get("Database", "password")
+
+    db = db_mgmt.dbManage(host, username, password, database)
     
-    output = ssh_connection(host, username, password)
+    # Command is sometimes not run due to weird bug, below is to ensure there are retries until a value is returned
+    output = None
+    while output == None:
+        output = ssh_connection(ssh_host, ssh_username, ssh_password)
+        time.sleep(2)
 
     output_wattage_percent = parse_detstatus(output)
 
     result = calculate_power_usage(output_wattage_percent, config)
-    print(result)
+
+    db.insert_power_used(result)

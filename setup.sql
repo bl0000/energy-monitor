@@ -5,7 +5,6 @@ USE energymon;
 CREATE TABLE power_used (
 	id INT PRIMARY KEY AUTO_INCREMENT,
 	watts SMALLINT,
-	cost_in_pence SMALLINT,
 	added DATETIME
 );
 
